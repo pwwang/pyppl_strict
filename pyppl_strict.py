@@ -8,7 +8,7 @@ import cmdy
 from os import utime
 from pyppl.plugin import hookimpl
 from pyppl.jobmgr import STATES
-from pyppl.utils import always_list
+from pyppl.utils import always_list, fs
 from pyppl._proc import OUT_VARTYPE
 
 __version__ = "0.0.1"
@@ -80,8 +80,10 @@ def setup(config):
 
 @hookimpl
 def proc_init(proc):
+	def strict_expect_converter(expect):
+		return proc.template(expect, **proc.envs)
 	proc.add_config('strict_rc', default = 0, converter = strict_rc_converter)
-	proc.add_config('strict_expect', default = '')
+	proc.add_config('strict_expect', default = '', converter = strict_expect_converter)
 
 @hookimpl
 def job_succeeded(job):
@@ -106,6 +108,13 @@ def job_succeeded(job):
 			job.logger(expect_cmd, dlevel = "EXPECTATION_FAILED", level = 'error')
 			return False
 	return True
+
+@hookimpl
+def job_build(job, status):
+	if status == 'failed':
+		show_error(job,
+			len([fjob for fjob in job.proc.jobs
+				if fjob.state == STATES.BUILTFAILED]))
 
 @hookimpl
 def proc_postrun(proc, status):
