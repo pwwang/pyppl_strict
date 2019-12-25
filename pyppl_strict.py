@@ -48,8 +48,8 @@ def show_error(job, total):
 	job.logger('Stderr: {}'.format(job.dir / 'job.stderr'), level = 'failed')
 
 	# errors are not echoed, echo them out
-	if job.index not in job.proc.plugin_config.get('echo_jobs', []) or \
-		'stderr' not in job.proc.plugin_config.get('echo_types', {}):
+	if job.index not in job.proc.config.get('echo_jobs', []) or \
+		'stderr' not in job.proc.config.get('echo_types', {}):
 
 		job.logger('Check STDERR below:', level = 'failed')
 		errmsgs = []
@@ -75,8 +75,8 @@ def logger_init(logger):
 
 @hookimpl
 def setup(config):
-	config.plugin_config.strict_rc = [0]
-	config.plugin_config.strict_expect = ""
+	config.config.strict_rc = [0]
+	config.config.strict_expect = ""
 
 @hookimpl
 def proc_init(proc):
@@ -87,7 +87,7 @@ def proc_init(proc):
 
 @hookimpl
 def job_succeeded(job):
-	if job.rc not in job.proc.plugin_config.strict_rc:
+	if job.rc not in job.proc.config.strict_rc:
 		return False
 
 	# check if all outputs are generated
@@ -100,7 +100,7 @@ def job_succeeded(job):
 				dlevel = "OUTFILE_NOT_EXISTS", level = 'debug')
 			return False
 
-	expect_cmd = job.proc.plugin_config.strict_expect.render(job.data)
+	expect_cmd = job.proc.config.strict_expect.render(job.data)
 	if expect_cmd:
 		cmd = cmdy.bash(c = expect_cmd, _raise = False) # pylint: disable=no-member
 		if cmd.rc != 0:
