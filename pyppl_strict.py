@@ -11,7 +11,7 @@ from pyppl.jobmgr import STATES
 from pyppl.utils import always_list, fs
 from pyppl._proc import OUT_VARTYPE
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 RC_NO_OUTFILE  = 5000
 RC_EXPECT_FAIL = 10000
