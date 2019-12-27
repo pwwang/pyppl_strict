@@ -4,8 +4,9 @@ Features:
 2. allow custom returncode settings
 3. allow a custom script to check the output file
 """
-import cmdy
 from os import utime
+import random
+import cmdy
 from pyppl.plugin import hookimpl
 from pyppl.jobmgr import STATES
 from pyppl.utils import always_list, fs
@@ -17,6 +18,7 @@ RC_NO_OUTFILE  = 5000
 RC_EXPECT_FAIL = 10000
 
 def strict_rc_converter(rc):
+	"""Convert return code from input"""
 	if not rc:
 		return [0]
 	if isinstance(rc, str):
@@ -27,6 +29,7 @@ def strict_rc_converter(rc):
 	return rc
 
 def show_error(job, total):
+	"""Show error message for a job"""
 	if job.rc > RC_EXPECT_FAIL:
 		msg = '%s (Expectation failed)' % (job.rc - RC_EXPECT_FAIL)
 	elif job.rc > RC_NO_OUTFILE:
@@ -69,17 +72,20 @@ def show_error(job, total):
 
 @hookimpl
 def logger_init(logger):
+	"""Add log levels"""
 	logger.add_level('FAILED', 'ERROR')
 	logger.add_sublevel('OUTFILE_NOT_EXISTS', -1)
 	logger.add_sublevel('EXPECTATION_FAILED', -1)
 
 @hookimpl
 def setup(config):
+	"""Add default configurations"""
 	config.config.strict_rc = [0]
 	config.config.strict_expect = ""
 
 @hookimpl
 def proc_init(proc):
+	"""Add configs"""
 	def strict_expect_converter(expect):
 		return proc.template(expect, **proc.envs)
 	proc.add_config('strict_rc', default = 0, converter = strict_rc_converter)
@@ -87,6 +93,7 @@ def proc_init(proc):
 
 @hookimpl
 def job_succeeded(job):
+	"""Check rc, expect and outfiles to tell if a job is really succeeded"""
 	if job.rc not in job.proc.config.strict_rc:
 		return False
 
@@ -111,6 +118,7 @@ def job_succeeded(job):
 
 @hookimpl
 def job_build(job, status):
+	"""Show error message while failed to build job"""
 	if status == 'failed':
 		show_error(job,
 			len([fjob for fjob in job.proc.jobs
@@ -118,9 +126,12 @@ def job_build(job, status):
 
 @hookimpl
 def proc_postrun(proc, status):
+	"""Show error message for failed jobs"""
 	if status == 'failed':
 		failed_jobs = [job for job in proc.jobs if job.state in (
 			STATES.ENDFAILED, STATES.DONEFAILED,
-			STATES.SUBMITFAILED, STATES.BUILTFAILED
+			STATES.SUBMITFAILED, STATES.BUILTFAILED,
+			STATES.KILLED, STATES.KILLFAILED
 		)]
+		failed_jobs = failed_jobs or [proc.jobs[0]]
 		show_error(random.choice(failed_jobs), total = len(failed_jobs))
