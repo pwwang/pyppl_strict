@@ -87,6 +87,8 @@ def setup(config):
 def proc_init(proc):
 	"""Add configs"""
 	def strict_expect_converter(expect):
+		if isinstance(expect, proc.template):
+			return expect
 		return proc.template(expect, **proc.envs)
 	proc.add_config('strict_rc', default = 0, converter = strict_rc_converter)
 	proc.add_config('strict_expect', default = '', converter = strict_expect_converter)
