@@ -106,7 +106,7 @@ def job_succeeded(job):
 		if outtype not in OUT_VARTYPE and not fs.exists(outdata):
 			job.rc += RC_NO_OUTFILE
 			job.logger('Outfile not generated: {}'.format(outdata),
-				dlevel = "OUTFILE_NOT_EXISTS", level = 'debug')
+				slevel = "OUTFILE_NOT_EXISTS", level = 'debug')
 			return False
 
 	expect_cmd = job.proc.config.strict_expect.render(job.data)
@@ -114,17 +114,9 @@ def job_succeeded(job):
 		cmd = cmdy.bash(c = expect_cmd, _raise = False) # pylint: disable=no-member
 		if cmd.rc != 0:
 			job.rc += RC_EXPECT_FAIL
-			job.logger(expect_cmd, dlevel = "EXPECTATION_FAILED", level = 'error')
+			job.logger(expect_cmd, slevel = "EXPECTATION_FAILED", level = 'error')
 			return False
 	return True
-
-@hookimpl
-def job_build(job, status):
-	"""Show error message while failed to build job"""
-	if status == 'failed':
-		show_error(job,
-			len([fjob for fjob in job.proc.jobs
-				if fjob.state == STATES.BUILTFAILED]))
 
 @hookimpl
 def proc_postrun(proc, status):
