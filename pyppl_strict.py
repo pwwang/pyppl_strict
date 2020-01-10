@@ -9,8 +9,9 @@ import random
 import cmdy
 from pyppl.plugin import hookimpl
 from pyppl.jobmgr import STATES
-from pyppl.utils import always_list, fs
+from pyppl.utils import always_list, fs, filesig
 from pyppl._proc import OUT_VARTYPE
+from pyppl._job import RC_NO_RCFILE
 
 __version__ = "0.0.4"
 
@@ -30,10 +31,12 @@ def strict_rc_converter(rc):
 
 def show_error(job, total):
 	"""Show error message for a job"""
-	if job.rc > RC_EXPECT_FAIL:
+	if job.rc >= RC_EXPECT_FAIL:
 		msg = '%s (Expectation failed)' % (job.rc - RC_EXPECT_FAIL)
-	elif job.rc > RC_NO_OUTFILE:
+	elif job.rc >= RC_NO_OUTFILE:
 		msg = '%s (Output file/dir not generated)' % (job.rc - RC_NO_OUTFILE)
+	elif job.rc == RC_NO_RCFILE:
+		msg = '- (No RC file generated)'
 	else:
 		msg = '%s (Script failed)' % job.rc
 
@@ -101,7 +104,8 @@ def job_succeeded(job):
 
 	# check if all outputs are generated
 	# refresh stat
-	utime(job.dir.joinpath('output'), None)
+	outdir, mtime = filesig(job.dir.joinpath('output'))
+	utime(outdir, (mtime, mtime))
 	for outtype, outdata in job.output.values():
 		if outtype not in OUT_VARTYPE and not fs.exists(outdata):
 			job.rc += RC_NO_OUTFILE
