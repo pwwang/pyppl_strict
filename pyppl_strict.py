@@ -116,7 +116,7 @@ def job_succeeded(job):
 
     # check if all outputs are generated
     # refresh stat
-    outdir, mtime = filesig(job.dir.joinpath('output'))
+    outdir, mtime = filesig(job.dir.joinpath('output'), job.proc.dirsig)
     utime(outdir, (mtime, mtime))
     for outtype, outdata in job.output.values():
         if outtype not in OUT_VARTYPE and not fs.exists(outdata):
