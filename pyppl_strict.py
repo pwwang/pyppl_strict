@@ -44,24 +44,28 @@ def show_error(job, total):
 
     if job.proc.errhow == 'ignore':
         job.logger(
-            'Failed but ignored (totally {total}). Return code: {msg}.'.format(
-                total=total, msg=msg),
-            level='warning')
+            f'Failed but ignored (totally {total}). Return code: {msg}.',
+            level='warning',
+            plugin='strict'
+        )
         return
 
-    job.logger('Failed (totally {total}). Return code: {msg}.'.format(
-        total=total, msg=msg),
-               level='failed')
+    job.logger(f'Failed (totally {total}). Return code: {msg}.',
+               level='failed',
+               plugin='strict')
 
-    job.logger('Script: {}'.format(job.dir / 'job.script'), level='failed')
-    job.logger('Stdout: {}'.format(job.dir / 'job.stdout'), level='failed')
-    job.logger('Stderr: {}'.format(job.dir / 'job.stderr'), level='failed')
+    job.logger(f'Script: {job.dir / "job.script"}',
+               level='failed', plugin='strict')
+    job.logger(f'Stdout: {job.dir / "job.stdout"}',
+               level='failed', plugin='strict')
+    job.logger(f'Stderr: {job.dir / "job.stderr"}',
+               level='failed', plugin='strict')
 
     # errors are not echoed, echo them out
     if (job.index not in job.proc.config.get('echo_jobs', [])
             or 'stderr' not in job.proc.config.get('echo_types', {})):
 
-        job.logger('Check STDERR below:', level='failed')
+        job.logger('Check STDERR below:', level='failed', plugin='strict')
         errmsgs = []
         if job.dir.joinpath('job.stderr').exists():
             errmsgs = job.dir.joinpath('job.stderr').read_text().splitlines()
@@ -70,13 +74,14 @@ def show_error(job, total):
             errmsgs = ['<EMPTY STDERR>']
 
         for errmsg in errmsgs[-20:] if len(errmsgs) > 20 else errmsgs:
-            job.logger(errmsg, level='failed')
+            job.logger(errmsg, level='failed', plugin='strict')
 
         if len(errmsgs) > 20:
             job.logger(
                 '[ Top {top} line(s) ignored, see all in stderr file. ]'.
                 format(top=len(errmsgs) - 20),
-                level='failed')
+                level='failed', plugin='strict'
+            )
 
 
 @hookimpl
@@ -123,7 +128,8 @@ def job_succeeded(job):
             job.rc += RC_NO_OUTFILE
             job.logger('Outfile not generated: {}'.format(outdata),
                        slevel="OUTFILE_NOT_EXISTS",
-                       level='debug')
+                       level='debug',
+                       plugin='strict')
             return False
 
     expect_cmd = job.proc.config.strict_expect.render(job.data)
@@ -131,7 +137,10 @@ def job_succeeded(job):
         cmd = cmdy.bash(c=expect_cmd, _raise=False)  # pylint: disable=no-member
         if cmd.rc != 0:
             job.rc += RC_EXPECT_FAIL
-            job.logger(expect_cmd, slevel="EXPECTATION_FAILED", level='error')
+            job.logger(expect_cmd,
+                       slevel="EXPECTATION_FAILED",
+                       level='error',
+                       plugin='strict')
             return False
     return True
 
