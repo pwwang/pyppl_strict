@@ -8,6 +8,7 @@ from os import utime
 import random
 import cmdy
 from pyppl.plugin import hookimpl
+from pyppl.config import config
 from pyppl.jobmgr import STATES
 from pyppl.utils import always_list, fs, filesig
 from pyppl._proc import OUT_VARTYPE
@@ -18,6 +19,8 @@ __version__ = "0.0.6"
 RC_NO_OUTFILE = 5000
 RC_EXPECT_FAIL = 10000
 
+config.config.strict_rc = [0]
+config.config.strict_expect = ""
 
 def strict_rc_converter(rc):
     """Convert return code from input"""
@@ -91,12 +94,6 @@ def logger_init(logger):
     logger.add_sublevel('OUTFILE_NOT_EXISTS', -1)
     logger.add_sublevel('EXPECTATION_FAILED', -1)
 
-
-@hookimpl
-def setup(config):
-    """Add default configurations"""
-    config.config.strict_rc = [0]
-    config.config.strict_expect = ""
 
 
 @hookimpl
