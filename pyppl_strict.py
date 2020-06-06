@@ -14,7 +14,7 @@ from pyppl.utils import always_list, fs, filesig
 from pyppl._proc import OUT_VARTYPE
 from pyppl._job import RC_NO_RCFILE
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 RC_NO_OUTFILE = 5000
 RC_EXPECT_FAIL = 10000
